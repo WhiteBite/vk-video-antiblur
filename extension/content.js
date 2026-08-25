@@ -29,7 +29,18 @@
      * для сканирования. Поэтому блюр детектируется по вычисленному стилю элемента —
      * это не зависит от имён классов.
      */
+    /**
+     * Дешёвая проверка «мы уже починили этот img»: инлайн-оверрайд с !important
+     * имеет высший приоритет и не может быть перебит классом. Позволяет sweep'у
+     * пропускать обработанные изображения без getComputedStyle (без style recalc).
+     */
+    function isAlreadyDeblurred(img) {
+        return img.style.getPropertyValue('filter') === 'none' &&
+               img.style.getPropertyPriority('filter') === 'important';
+    }
+
     function deblurImage(img) {
+        if (isAlreadyDeblurred(img)) return;
         var filter;
         try {
             filter = getComputedStyle(img).filter;
@@ -78,36 +89,49 @@
     }
 
     /**
-     * Слой 3 — периодический sweep. Покрывает случаи, когда React переиспользует
-     * DOM-узел и меняет ему класс без добавления новых узлов (MutationObserver
-     * такое не ловит). Флаг dirty не даёт гонять скан впустую на статичной странице.
+     * Слой 3 — периодический sweep. Страховка на случаи, которые observer мог
+     * пропустить. Работает безусловно, но дёшево: isAlreadyDeblurred отсекает
+     * обработанные изображения за O(1) без style recalculation, поэтому на
+     * статичной странице полный проход — просто чтение инлайн-свойств.
      */
-    var dirty = true;
-
     function fullSweep() {
         if (!document.body) return;
         scanWithin(document.body);
     }
 
+    /**
+     * Observer следит и за childList (новые узлы), и за class/style на существующих —
+     * это ловит реюз DOM-узлов React'ом (смена класса без добавления узлов),
+     * устраняя окно до следующего sweep. attributeFilter ограничивает шум.
+     */
     var observer = new MutationObserver(function (mutations) {
-        dirty = true;
-        for (var i = 0; i < mutations.length; i++) {
-            var added = mutations[i].addedNodes;
-            for (var j = 0; j < added.length; j++) {
-                if (added[j].nodeType === 1) scanWithin(added[j]);
+        try {
+            for (var i = 0; i < mutations.length; i++) {
+                var m = mutations[i];
+                if (m.type === 'childList') {
+                    var added = m.addedNodes;
+                    for (var j = 0; j < added.length; j++) {
+                        if (added[j].nodeType === 1) scanWithin(added[j]);
+                    }
+                } else if (m.type === 'attributes' && m.target.tagName === 'IMG') {
+                    deblurImage(m.target);
+                }
             }
+        } catch (e) {
+            // observer не должен умирать из-за одной неудачной мутации
         }
     });
 
     function start() {
         injectStyle();
         fullSweep();
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-        setInterval(function () {
-            if (!dirty) return;
-            dirty = false;
-            fullSweep();
-        }, SWEEP_INTERVAL_MS);
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+        setInterval(fullSweep, SWEEP_INTERVAL_MS);
     }
 
     if (document.documentElement) {
