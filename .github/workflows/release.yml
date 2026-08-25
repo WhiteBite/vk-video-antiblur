@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches @version and manifest version
+        run: |
+          V=$(grep -m1 -oP '(?<=@version\s)\S+' vk-video-antiblur.user.js)
+          MV=$(node -p "require('./extension/manifest.json').version")
+          echo "userscript @version: $V | manifest version: $MV | tag: ${GITHUB_REF_NAME}"
+          if [ "v$V" != "${GITHUB_REF_NAME}" ] || [ "$MV" != "$V" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} must equal @version ($V) and manifest version ($MV)"
+            exit 1
+          fi
+
+      - name: Package browser extension
+        run: |
+          cd extension
+          zip -r "../vk-video-antiblur-extension-${GITHUB_REF_NAME}.zip" . -x '.*'
+          cd ..
+          ls -la vk-video-antiblur-extension-*.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            vk-video-antiblur.user.js
+            vk-video-antiblur-extension-*.zip

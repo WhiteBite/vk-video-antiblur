@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax check (userscript + content script)
+        run: |
+          node --check vk-video-antiblur.user.js
+          node --check extension/content.js
+
+      - name: Validate extension manifest
+        run: |
+          node -e "
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('extension/manifest.json', 'utf8'));
+          if (m.manifest_version !== 3) throw new Error('manifest_version must be 3');
+          if (!m.content_scripts || !m.content_scripts.length) throw new Error('no content_scripts');
+          if (!m.content_scripts[0].js.includes('content.js')) throw new Error('content.js not referenced');
+          const us = fs.readFileSync('vk-video-antiblur.user.js', 'utf8');
+          const v = us.match(/@version\s+(\S+)/)[1];
+          if (m.version !== v) throw new Error('manifest version ' + m.version + ' != @version ' + v);
+          console.log('manifest OK:', m.name, m.version);
+          "
+
+      - name: Check content.js is in sync with userscript body
+        run: |
+          node -e "
+          const fs = require('fs');
+          const us = fs.readFileSync('vk-video-antiblur.user.js', 'utf8');
+          const body = us.split('// ==/UserScript==')[1].replace(/^\r?\n/, '').trimEnd() + '\n';
+          const ext = fs.readFileSync('extension/content.js', 'utf8').trimEnd() + '\n';
+          if (body !== ext) { console.error('extension/content.js is out of sync with the userscript body'); process.exit(1); }
+          console.log('content.js in sync');
+          "

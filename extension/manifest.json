@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "VK Video AntiBlur",
+  "short_name": "VK AntiBlur",
+  "version": "1.0.0",
+  "description": "Убирает размытие превью 18+ и оверлей возрастного ограничения на VK Видео и vk.com. Removes 18+ preview blur on VK Video.",
+  "author": "WhiteBite",
+  "homepage_url": "https://github.com/WhiteBite/vk-video-antiblur",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://vkvideo.ru/*",
+        "*://*.vkvideo.ru/*",
+        "*://vk.com/*",
+        "*://*.vk.com/*",
+        "*://vk.ru/*",
+        "*://*.vk.ru/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "vk-video-antiblur@whitebite.github",
+      "strict_min_version": "109.0"
+    }
+  }
+}
