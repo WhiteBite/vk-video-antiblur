@@ -1,5 +1,12 @@
 # VK Video AntiBlur
 
+![VK Video AntiBlur — убрать блюр с превью VK Видео, userscript и расширение](docs/social-preview.png)
+
+[![Версия](https://img.shields.io/github/v/tag/WhiteBite/vk-video-antiblur)](https://github.com/WhiteBite/vk-video-antiblur/releases)
+[![CI](https://github.com/WhiteBite/vk-video-antiblur/actions/workflows/ci.yml/badge.svg)](https://github.com/WhiteBite/vk-video-antiblur/actions/workflows/ci.yml)
+[![Лицензия: MIT](https://img.shields.io/github/license/WhiteBite/vk-video-antiblur)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/WhiteBite/vk-video-antiblur)](https://github.com/WhiteBite/vk-video-antiblur/commits/main)
+
 Юзерскрипт и браузерное расширение, которое убирает блюр вк видео — снимает размытие превью 18+ и скрывает оверлей «Видео с возрастным ограничением» на vkvideo.ru и vk.com. Если вас раздражает размытие превью, этот инструмент решает проблему без настроек и галочек.
 
 ## Быстрая установка
