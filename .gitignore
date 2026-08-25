@@ -1,0 +1,16 @@
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Tooling artifacts
+.playwright-mcp/
+.codegraph/
+.omo/
+node_modules/
+*.log
