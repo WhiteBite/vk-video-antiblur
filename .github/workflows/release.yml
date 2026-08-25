@@ -15,7 +15,7 @@ jobs:
 
       - name: Verify tag matches @version and manifest version
         run: |
-          V=$(grep -m1 -oP '(?<=@version\s)\S+' vk-video-antiblur.user.js)
+          V=$(awk '$1=="@version"{print $2; exit}' vk-video-antiblur.user.js)
           MV=$(node -p "require('./extension/manifest.json').version")
           echo "userscript @version: $V | manifest version: $MV | tag: ${GITHUB_REF_NAME}"
           if [ "v$V" != "${GITHUB_REF_NAME}" ] || [ "$MV" != "$V" ]; then
